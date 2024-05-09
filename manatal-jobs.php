@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Manatal Jobs Display
+ * Plugin Name: Display Manatal Job Board
  * Plugin URI: http://chris.samebraincreative.com/
  * Description: Displays job listings from Manatal with clickable links to each job detail page.
  * Version: 1.0
- * Author: Chris Barry
+ * Author: Same Brain Creative
  * Author URI: http://chris.samebraincreative.com/
  */
 
