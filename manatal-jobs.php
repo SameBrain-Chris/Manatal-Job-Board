@@ -52,11 +52,18 @@ function manatal_jobs_admin_init(){
         'All Job Board Settings',
         'manatal_jobs_section_text',
         'manataljobs'
-    );  
+    );
     add_settings_field(
-        'manatal_jobs_setting_string',
+        'manatal_jobs_setting_client_slug',
         'Client Slug',
         'manatal_jobs_setting_string',
+        'manataljobs',
+        'manatal_jobs_main'
+    );
+    add_settings_field(
+        'manatal_jobs_setting_location',
+        'Location',
+        'manatal_jobs_setting_location',
         'manataljobs',
         'manatal_jobs_main'
     );
@@ -86,7 +93,11 @@ function manatal_jobs_setting_string() {
     echo "<p style='margin-bottom:1rem; max-width:600px'>Your client slug is the part of your career page URL that follows the backslash. For example, if your career page URL is https://www.careers-page.com/{client-slug}, then your client slug is {client-slug}.</p>";
     echo "<input id='manatal_jobs_client_slug' name='manatal_jobs_options[client_slug]' size='40' type='text' placeholder='{client-slug}' value='{$client_slug}' style='margin-bottom:1em;' />";
 }
-
+function manatal_jobs_setting_location() {
+    $options = get_option('manatal_jobs_options', array('show_location' => ''));
+    $show_location = isset($options['show_location']) ? $options['show_location'] : '';
+    echo "<span style='margin-right:8px;'>Check the box to show job locations on the job board.</span><input id='manatal_jobs_show_location' name='manatal_jobs_options[show_location]' type='checkbox' value='1' " . checked(1, $show_location, false) . " />";
+}
 function manatal_jobs_setting_checkbox() {
     $options = get_option('manatal_jobs_options', array('show_description' => ''));
     $show_description = isset($options['show_description']) ? $options['show_description'] : '';
@@ -117,10 +128,11 @@ function manatal_jobs_options_validate($input) {
     $newinput = array();
     $newinput['client_slug'] = trim($input['client_slug']);
     if (preg_match('/^[a-zA-Z0-9_\-]+$/', $newinput['client_slug'])) {
+        $newinput['show_location'] = isset($input['show_location']) ? (int)$input['show_location'] : 0;
         $newinput['show_description'] = isset($input['show_description']) ? (int)$input['show_description'] : 0;
         return $newinput;
     } else {
-        return array(); // You might want to handle this scenario better, e.g., by returning existing options or a specific error.
+        return $input; // Return the original input if the client slug is not valid
     }
 }
 
@@ -172,7 +184,9 @@ function display_manatal_jobs() {
             
             echo "<a href='" . esc_url($jobLink) . "' class='job-post-card' target='_blank'>";
             echo "<h3 class='job-post-title'>" . esc_html($job['position_name']) . "</h3>";
-            echo "<p class='job-post-location'>" . esc_html($job['location_display']) . "</p>";
+            if (isset($options['show_location']) && $options['show_location'] == 1) {
+                echo "<p class='job-post-location'>" . esc_html($job['location_display']) . "</p>";
+            }
             if (isset($options['show_description']) && $options['show_description'] == 1) {
             echo "<p class='job-post-description'>" . $job['description'] . "</p>";
             }
