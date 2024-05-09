@@ -110,7 +110,8 @@ function display_manatal_jobs() {
     echo "<div class='job-posts'>";
     foreach ($jobs['results'] as $job) {
       // Link to the detailed job page
-      $client_slug = $options['client_slug'];
+      $options = get_option('manatal_jobs_options');
+      $client_slug = $options['client_slug'];  // Use the option value
       $jobLink = "https://www.careers-page.com/" .$client_slug. "/job/" . urlencode($job['hash']);
       
       echo "<a href='" . esc_url($jobLink) . "' class='job-post-card' target='_blank'>";
