@@ -8,7 +8,13 @@
  * Author URI: http://chris.samebraincreative.com/
  */
 
- // Hook for adding admin menus
+register_activation_hook(__FILE__, 'manatal_jobs_activate');
+function manatal_jobs_activate() {
+    $default_options = array('client_slug' => '');
+    update_option('manatal_jobs_options', $default_options, true);
+}
+
+// Hook for adding admin menus
 add_action('admin_menu', 'manatal_jobs_menu');
 
 // Action function for above hook
@@ -35,7 +41,6 @@ function manatal_jobs_options_page() {
 
 // Register and define the settings
 add_action('admin_init', 'manatal_jobs_admin_init');
-
 function manatal_jobs_admin_init(){
     register_setting(
         'manatal_jobs_options',
@@ -62,12 +67,12 @@ function manatal_jobs_section_text() {
 }
 
 function manatal_jobs_setting_string() {
-    $options = get_option('manatal_jobs_options');
-    echo "<input id='manatal_jobs_client_slug' name='manatal_jobs_options[client_slug]' size='40' type='text' value='{$options['client_slug']}' />";
+    $options = get_option('manatal_jobs_options', array('client_slug' => '')); // Default if not set
+    $client_slug = isset($options['client_slug']) ? $options['client_slug'] : '';
+    echo "<input id='manatal_jobs_client_slug' name='manatal_jobs_options[client_slug]' size='40' type='text' placeholder='Enter client slug here' value='{$client_slug}' />";
 }
 
 function manatal_jobs_options_validate($input) {
-    // Validate/sanitize options
     $newinput['client_slug'] = trim($input['client_slug']);
     // Check the input is a valid alphanumeric slug
     if(preg_match('/^[a-zA-Z0-9_\-]+$/', $newinput['client_slug'])) {
@@ -79,18 +84,22 @@ function manatal_jobs_options_validate($input) {
 
 // Fetch and display jobs with updated options
 function fetch_manatal_jobs() {
-    $options = get_option('manatal_jobs_options');
-    $client_slug = $options['client_slug'];  // Use the option value
+    $options = get_option('manatal_jobs_options', array('client_slug' => ''));
+    $client_slug = isset($options['client_slug']) ? $options['client_slug'] : '';
+    
+    if (empty($client_slug)) {
+        return "Client slug is not set. Please configure it in the plugin settings.";
+    }
 
     $curl = curl_init();
     curl_setopt_array($curl, [
-      CURLOPT_URL => "https://api.manatal.com/open/v3/career-page/" . $client_slug . "/jobs/",
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_ENCODING => "",
-      CURLOPT_MAXREDIRS => 10,
-      CURLOPT_TIMEOUT => 30,
-      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-      CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_URL => "https://api.manatal.com/open/v3/career-page/" . urlencode($client_slug) . "/jobs/",
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
     ]);
 
     $response = curl_exec($curl);
@@ -103,27 +112,31 @@ function fetch_manatal_jobs() {
         return json_decode($response, true);
     }
 }
-
 function display_manatal_jobs() {
-  $jobs = fetch_manatal_jobs();
-  if (isset($jobs['results'])) {
-    echo "<div class='job-posts'>";
-    foreach ($jobs['results'] as $job) {
-      // Link to the detailed job page
-      $options = get_option('manatal_jobs_options');
-      $client_slug = $options['client_slug'];  // Use the option value
-      $jobLink = "https://www.careers-page.com/" .$client_slug. "/job/" . urlencode($job['hash']);
-      
-      echo "<a href='" . esc_url($jobLink) . "' class='job-post-card' target='_blank'>";
-      echo "<h2 class='job-post-title'>" . esc_html($job['position_name']) . "</h2>";
-      echo "<p class='job-post-location'>" . esc_html($job['location_display']) . "</p>";
-      echo "<i aria-hidden='true' class='far fa-angle-right job-post-card-icon'></i>";
-      echo "</a>";
+    $jobs = fetch_manatal_jobs();
+    if (is_string($jobs)) {  // Check if the return is an error message
+        echo $jobs;
+        return;
     }
-    echo "</div>";
-  } else {
-    echo "No jobs found";
-  }
+
+    if (isset($jobs['results'])) {
+        echo "<div class='job-posts'>";
+        foreach ($jobs['results'] as $job) {
+            // Link to the detailed job page
+            $options = get_option('manatal_jobs_options');
+            $client_slug = $options['client_slug'];  // Use the option value
+            $jobLink = "https://www.careers-page.com/" . urlencode($client_slug) . "/job/" . urlencode($job['hash']);
+            
+            echo "<a href='" . esc_url($jobLink) . "' class='job-post-card' target='_blank'>";
+            echo "<h2 class='job-post-title'>" . esc_html($job['position_name']) . "</h2>";
+            echo "<p class='job-post-location'>" . esc_html($job['location_display']) . "</p>";
+            echo "<i aria-hidden='true' class='far fa-angle-right job-post-card-icon'></i>";
+            echo "</a>";
+        }
+        echo "</div>";
+    } else {
+        echo "No jobs found";
+    }
 }
 
 // Shortcode to display jobs
