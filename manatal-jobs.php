@@ -69,6 +69,7 @@ function manatal_jobs_section_text() {
 function manatal_jobs_setting_string() {
     $options = get_option('manatal_jobs_options', array('client_slug' => '')); // Default if not set
     $client_slug = isset($options['client_slug']) ? $options['client_slug'] : '';
+    echo "<p>Your client slug is the part of your career page URL that follows the backslash. For example, if your career page URL is https://www.careers-page.com/{client-slug}, then your client slug is {client-slug}.</p>";
     echo "<input id='manatal_jobs_client_slug' name='manatal_jobs_options[client_slug]' size='40' type='text' placeholder='Enter client slug here' value='{$client_slug}' />";
 }
 
