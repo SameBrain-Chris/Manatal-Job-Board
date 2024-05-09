@@ -1,2 +1,2 @@
 # Manatal-Job-Board
-A simple Wordpress Plugin to display Manatal Job entries from their [Careers Page API](https://developers.manatal.com/reference/getting-started)
+A simple Wordpress Plugin to display Manatal job post listings from their [Careers Page API](https://developers.manatal.com/reference/getting-started), with clickable links back to the Manatal job page.  
